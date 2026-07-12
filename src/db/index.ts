@@ -175,6 +175,33 @@ export function recordRun(
   );
 }
 
+export interface SearchOptions {
+  /** Keywords ANDed as case-insensitive substrings of title+location+company. */
+  terms: string[];
+  postedWithinDays?: number;
+  limit?: number;
+}
+
+export function searchJobs(db: Database.Database, opts: SearchOptions): JobRow[] {
+  const clauses = ["closed_at IS NULL"];
+  const params: unknown[] = [];
+  for (const t of opts.terms) {
+    clauses.push("(title || ' ' || location || ' ' || company) LIKE ?");
+    params.push(`%${t}%`);
+  }
+  if (opts.postedWithinDays) {
+    clauses.push("posted_at >= ?");
+    params.push(new Date(Date.now() - opts.postedWithinDays * 86_400_000).toISOString());
+  }
+  params.push(opts.limit ?? 10);
+  return db
+    .prepare(
+      `SELECT * FROM jobs WHERE ${clauses.join(" AND ")}
+       ORDER BY COALESCE(posted_at, first_seen_at) DESC LIMIT ?`,
+    )
+    .all(...params) as JobRow[];
+}
+
 export function recentMatches(db: Database.Database, limit = 25): JobRow[] {
   return db
     .prepare(

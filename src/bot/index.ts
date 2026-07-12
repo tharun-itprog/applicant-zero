@@ -14,9 +14,10 @@ import {
   type JobRow,
 } from "../db/index.js";
 import { poll } from "../watcher/poll.js";
+import { searchJobs } from "../db/index.js";
 import type { TelegramApi, TgMessage } from "./api.js";
 import { createTelegramApi } from "./api.js";
-import { handlePreferenceMessage } from "./intent.js";
+import { formatJobLine, handleChatMessage } from "./intent.js";
 
 const HELP = `applicant-zero bot 🤖
 
@@ -25,6 +26,7 @@ Send me things:
 • plain English — updates your search filters ("data analyst roles in the US, remote only")
 
 Commands:
+/search <keywords> — search all stored open jobs (e.g. /search analyst remote)
 /scan — poll all boards now, score & tailor new matches
 /review — recent matched jobs
 /evaluate [title fragment] — run the agent on a job (latest match if omitted)
@@ -124,7 +126,23 @@ export async function handleMessage(api: TelegramApi, db: Database.Database, msg
       await api.sendMessage(
         chatId,
         `Done: ${r.companies} companies · ${r.jobsSeen} open jobs · ${r.newJobs} new · ${r.matches.length} matched` +
+          (r.newJobs === 0 ? "\n(nothing has been posted since the last poll — alerts fire on new postings; use /search to dig through what's already stored)" : "") +
           (r.errors.length ? `\n⚠️ ${r.errors.length} errors (see bot logs)` : ""),
+      );
+      return;
+    }
+
+    case "/search": {
+      if (!arg) {
+        await api.sendMessage(chatId, "Give me keywords, e.g. /search analyst remote");
+        return;
+      }
+      const rows = searchJobs(db, { terms: arg.split(/\s+/), limit: 10 });
+      await api.sendMessage(
+        chatId,
+        rows.length
+          ? rows.map(formatJobLine).join("\n") + "\n\nRun /evaluate <title fragment> for a tailored resume."
+          : `Nothing stored matches "${arg}". Terms are ANDed — try fewer or broader words.`,
       );
       return;
     }
@@ -184,15 +202,15 @@ export async function handleMessage(api: TelegramApi, db: Database.Database, msg
         await api.sendMessage(chatId, `Unknown command ${cmd}. ${"\n\n"}${HELP}`);
         return;
       }
-      // Plain English → preference agent
+      // Plain English → chat agent (search + preference tools)
       if (!agentEnabled()) {
         await api.sendMessage(
           chatId,
-          "I can update filters from plain English once ANTHROPIC_API_KEY is set in .env. Until then, edit profile/preferences.yaml by hand.",
+          "I can handle plain English once ANTHROPIC_API_KEY is set in .env. Until then use /search, or edit profile/preferences.yaml by hand.",
         );
         return;
       }
-      await api.sendMessage(chatId, await handlePreferenceMessage(text));
+      await api.sendMessage(chatId, await handleChatMessage(db, text));
   }
 }
 
