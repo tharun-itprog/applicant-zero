@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.db
+*.db-journal
+.env
+
+# personal data — only the committed examples are public
+profile/*
+!profile/example.resume.md
+!profile/preferences.example.yaml
+packages/

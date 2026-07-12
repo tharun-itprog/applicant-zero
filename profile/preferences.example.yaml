@@ -1,0 +1,20 @@
+# Cheap deterministic prefilter — runs before any LLM sees a posting.
+# Copy to profile/preferences.yaml (gitignored) and edit for yourself.
+# Matching is case-insensitive substring. Empty include list = match all.
+titles:
+  include:
+    - engineer
+    - developer
+    - data
+  exclude:
+    - director
+    - principal
+    - intern
+locations:
+  include:
+    - remote
+    - united states
+    - ", ca"
+    - ", ny"
+    - ", tx"
+  exclude: []

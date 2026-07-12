@@ -1,0 +1,22 @@
+{
+  "name": "applicant-zero",
+  "version": "0.1.0",
+  "description": "Watch ATS career pages, match new roles against your profile, and prepare tailored application packages — human-in-the-loop by design.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "watch": "tsx src/cli.ts watch",
+    "review": "tsx src/cli.ts review",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

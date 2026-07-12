@@ -1,0 +1,13 @@
+# Companies to watch. slug = the company's identifier on its ATS's public API.
+# Find it in the careers-page URL, e.g. boards.greenhouse.io/<slug>,
+# jobs.lever.co/<slug>, jobs.ashbyhq.com/<slug>.
+companies:
+  - name: Stripe
+    ats: greenhouse
+    slug: stripe
+  - name: Palantir
+    ats: lever
+    slug: palantir
+  - name: Ashby
+    ats: ashby
+    slug: ashby

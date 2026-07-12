@@ -1,0 +1,45 @@
+name: watch
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The SQLite DB persists between runs via the actions cache. Each run
+      # restores the newest previous cache (restore-keys prefix match) and
+      # saves under a fresh key, since cache entries are immutable.
+      - name: Restore job database
+        uses: actions/cache/restore@v4
+        with:
+          path: azero.db
+          key: azero-db-${{ github.run_id }}
+          restore-keys: azero-db-
+
+      - name: Poll job boards
+        run: npm run watch
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Save job database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: azero.db
+          key: azero-db-${{ github.run_id }}
