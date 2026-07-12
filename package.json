@@ -8,6 +8,7 @@
     "watch": "tsx src/cli.ts watch",
     "review": "tsx src/cli.ts review",
     "evaluate": "tsx src/cli.ts evaluate",
+    "bot": "tsx src/cli.ts bot",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

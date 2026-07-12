@@ -62,7 +62,44 @@ export function openDb(path = process.env.AZERO_DB ?? "azero.db"): Database.Data
   if (!jobCols.includes("match_score")) {
     db.exec("ALTER TABLE jobs ADD COLUMN match_score REAL; ALTER TABLE jobs ADD COLUMN match_reasoning TEXT;");
   }
+  db.exec("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   return db;
+}
+
+export function getKv(db: Database.Database, key: string): string | undefined {
+  const row = db.prepare("SELECT value FROM kv WHERE key = ?").get(key) as { value: string } | undefined;
+  return row?.value;
+}
+
+export function setKv(db: Database.Database, key: string, value: string): void {
+  db.prepare("INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, value);
+}
+
+export interface ApplicationRow {
+  job_id: string;
+  status: string;
+  package_dir: string | null;
+  applied_at: string | null;
+  title: string;
+  company: string;
+  url: string;
+}
+
+export function listApplications(db: Database.Database, limit = 15): ApplicationRow[] {
+  return db
+    .prepare(
+      `SELECT a.job_id, a.status, a.package_dir, a.applied_at, j.title, j.company, j.url
+       FROM applications a JOIN jobs j ON j.id = a.job_id
+       ORDER BY a.rowid DESC LIMIT ?`,
+    )
+    .all(limit) as ApplicationRow[];
+}
+
+export function markApplied(db: Database.Database, jobId: string): void {
+  db.prepare("UPDATE applications SET status = 'applied', applied_at = ? WHERE job_id = ?").run(
+    new Date().toISOString(),
+    jobId,
+  );
 }
 
 /** Upsert a batch of postings. Returns the postings not previously in the DB. */

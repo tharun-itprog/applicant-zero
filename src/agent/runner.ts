@@ -14,9 +14,10 @@ export function agentEnabled(): boolean {
 /**
  * One headless pi run: fresh in-memory session, built-in coding tools
  * disabled, only the provided custom tools registered. The prompt resolves
- * when the agent's loop ends; results are captured by the tools' closures.
+ * when the agent's loop ends; structured results are captured by the tools'
+ * closures, and the agent's plain-text output is returned.
  */
-export async function runStage(prompt: string, tools: ToolDefinition[]): Promise<void> {
+export async function runStage(prompt: string, tools: ToolDefinition[]): Promise<string> {
   const modelId = process.env.AZERO_MODEL ?? "claude-sonnet-5";
   const model = getModels("anthropic").find((m) => m.id === modelId);
   if (!model) throw new Error(`Unknown Anthropic model id "${modelId}" (set AZERO_MODEL)`);
@@ -31,9 +32,17 @@ export async function runStage(prompt: string, tools: ToolDefinition[]): Promise
     customTools: tools,
     thinkingLevel: "low",
   });
+  let text = "";
+  const unsubscribe = session.subscribe((event) => {
+    if (event.type === "message_update" && event.assistantMessageEvent.type === "text_delta") {
+      text += event.assistantMessageEvent.delta;
+    }
+  });
   try {
     await session.prompt(prompt);
+    return text.trim();
   } finally {
+    unsubscribe();
     session.dispose();
   }
 }

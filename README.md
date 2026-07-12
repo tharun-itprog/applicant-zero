@@ -39,6 +39,19 @@ Create a bot with [@BotFather](https://t.me/botfather), get your chat id from [@
 
 `.github/workflows/watch.yml` polls every 30 minutes. Add the two Telegram values as repo secrets. The SQLite database persists between runs through the Actions cache.
 
+## The Telegram bot (interactive mode)
+
+`npm run bot` turns the alert channel into the interface (long polling — no
+webhook or server needed; only your own `TELEGRAM_CHAT_ID` is served):
+
+- **Send a `.md`/`.txt` file** → it becomes your base resume for all future tailoring
+- **Send plain English** — *"data analyst roles in the US, remote only, threshold 75"* → a sandboxed agent rewrites `profile/preferences.yaml` (its only tool is `update_preferences`)
+- `/scan` — poll every board now, score and tailor new matches
+- `/evaluate [title]` — run the agent on a job; the tailored resume comes **back to you as a file** (plus `.docx` if pandoc is installed), with drafted answers and the apply link
+- `/review`, `/status`, `/applied <n>` — pipeline tracking
+
+The flow: alert arrives → `/evaluate` → review the resume it sends back → tap the apply link → `/applied`. The human stays in the loop; the bot does everything else.
+
 ## Adding an ATS
 
 Implement the `ATSAdapter` interface in one file under [src/adapters/](src/adapters/) — fetch the board's public JSON and normalize it to `JobPosting` — then register it in [src/adapters/index.ts](src/adapters/index.ts). The Greenhouse adapter is ~40 lines.
@@ -63,8 +76,8 @@ npm run evaluate -- "Backend"       # ...or the newest job whose title matches
 
 - [x] Phase 1 — watchers, diffing, prefilter, Telegram alerts, scheduled runs
 - [x] Phase 2 — pi-based agent: match scoring + resume tailoring ([design](src/agent/README.md))
-- [ ] Phase 3 — application packages polish (PDF/DOCX export), tracker, dashboard
-- [ ] Phase 4 — Workday adapter, company-slug discovery crawler
+- [x] Phase 3 — interactive Telegram bot: resume upload, natural-language filters, on-demand scan/evaluate, tracker, DOCX export
+- [ ] Phase 4 — Workday adapter, company-slug discovery crawler, PDF resume import
 
 ## Privacy
 

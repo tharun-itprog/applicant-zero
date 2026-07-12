@@ -53,6 +53,11 @@ async function main(): Promise<void> {
       }
       break;
     }
+    case "bot": {
+      const { runBot } = await import("./bot/index.js");
+      await runBot(openDb());
+      break;
+    }
     case "evaluate": {
       if (!agentEnabled()) {
         console.error("Agent disabled: set ANTHROPIC_API_KEY in .env (and don't set AZERO_AGENT=off).");
@@ -90,6 +95,7 @@ async function main(): Promise<void> {
       console.log("  tsx src/cli.ts review                     list recent matched jobs");
       console.log("  tsx src/cli.ts evaluate [<job_id>|<title fragment>|--latest]");
       console.log("                                            run the agent on a stored job");
+      console.log("  tsx src/cli.ts bot                        interactive Telegram bot (long polling)");
       process.exitCode = command ? 1 : 0;
   }
 }
