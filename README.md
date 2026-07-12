@@ -43,11 +43,27 @@ Create a bot with [@BotFather](https://t.me/botfather), get your chat id from [@
 
 Implement the `ATSAdapter` interface in one file under [src/adapters/](src/adapters/) — fetch the board's public JSON and normalize it to `JobPosting` — then register it in [src/adapters/index.ts](src/adapters/index.ts). The Greenhouse adapter is ~40 lines.
 
+## The agent layer
+
+With `ANTHROPIC_API_KEY` set (see `.env.example`), every prefiltered match is
+evaluated by a headless [pi](https://pi.dev) agent in two stages: a scoring
+pass (0–100 fit against your resume, with reasoning), and — above the
+`agent.threshold` from your preferences — a tailoring pass that writes a
+ready-to-review application package to `packages/`. Each stage is a sandboxed
+pi session whose *only* registered tool is the one that submits its result:
+the agent physically cannot touch files, run commands, or apply anywhere.
+Details in [src/agent/README.md](src/agent/README.md).
+
+```bash
+npm run evaluate -- --latest        # run the agent on the newest matched job
+npm run evaluate -- "Backend"       # ...or the newest job whose title matches
+```
+
 ## Roadmap
 
 - [x] Phase 1 — watchers, diffing, prefilter, Telegram alerts, scheduled runs
-- [ ] Phase 2 — pi-based agent: match scoring + resume tailoring ([design](src/agent/README.md))
-- [ ] Phase 3 — application packages, tracker, dashboard
+- [x] Phase 2 — pi-based agent: match scoring + resume tailoring ([design](src/agent/README.md))
+- [ ] Phase 3 — application packages polish (PDF/DOCX export), tracker, dashboard
 - [ ] Phase 4 — Workday adapter, company-slug discovery crawler
 
 ## Privacy

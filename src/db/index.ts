@@ -16,6 +16,8 @@ export interface JobRow {
   closed_at: string | null;
   prefilter_pass: number | null;
   notified_at: string | null;
+  match_score: number | null;
+  match_reasoning: string | null;
 }
 
 export function openDb(path = process.env.AZERO_DB ?? "azero.db"): Database.Database {
@@ -56,6 +58,10 @@ export function openDb(path = process.env.AZERO_DB ?? "azero.db"): Database.Data
     );
     CREATE INDEX IF NOT EXISTS idx_jobs_first_seen ON jobs(first_seen_at);
   `);
+  const jobCols = (db.prepare("PRAGMA table_info(jobs)").all() as { name: string }[]).map((c) => c.name);
+  if (!jobCols.includes("match_score")) {
+    db.exec("ALTER TABLE jobs ADD COLUMN match_score REAL; ALTER TABLE jobs ADD COLUMN match_reasoning TEXT;");
+  }
   return db;
 }
 

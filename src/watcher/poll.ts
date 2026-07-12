@@ -3,6 +3,8 @@ import { getAdapter } from "../adapters/index.js";
 import type { JobPosting } from "../adapters/types.js";
 import { loadCompanies, loadPreferences } from "../config.js";
 import { markClosed, recordRun, setNotified, setPrefilterResult, upsertJobs } from "../db/index.js";
+import { evaluateJob } from "../agent/evaluate.js";
+import { agentEnabled } from "../agent/runner.js";
 import { notifyNewJob } from "../notify/telegram.js";
 import { prefilter } from "../prefilter.js";
 
@@ -57,8 +59,22 @@ export async function poll(db: Database.Database): Promise<PollResult> {
       setPrefilterResult(db, job.id, pass);
       if (!pass) continue;
       result.matches.push(job);
+
+      let verdict: string | undefined;
+      if (agentEnabled()) {
+        try {
+          const ev = await evaluateJob(db, job);
+          verdict = ev.packageDir
+            ? `🤖 ${ev.score.score}/100 — package ready: ${ev.packageDir}`
+            : `🤖 ${ev.score.score}/100 — below threshold, no package`;
+        } catch (err) {
+          result.errors.push(`agent ${job.id}: ${err}`);
+          verdict = "🤖 agent evaluation failed (see logs)";
+        }
+      }
+
       try {
-        await notifyNewJob(job);
+        await notifyNewJob(job, verdict);
         setNotified(db, job.id);
       } catch (err) {
         result.errors.push(`notify ${job.id}: ${err}`);

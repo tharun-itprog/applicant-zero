@@ -4,7 +4,7 @@ import type { JobPosting } from "../adapters/types.js";
  * Sends a Telegram message when TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are
  * set; otherwise logs to stdout so the pipeline works with zero setup.
  */
-export async function notifyNewJob(job: JobPosting): Promise<void> {
+export async function notifyNewJob(job: JobPosting, extra?: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
@@ -12,6 +12,7 @@ export async function notifyNewJob(job: JobPosting): Promise<void> {
   const text = [
     `🎯 New match: ${job.title}`,
     `🏢 ${job.company} · ${job.location || "location n/a"}${posted}`,
+    ...(extra ? [extra] : []),
     job.url,
   ].join("\n");
 

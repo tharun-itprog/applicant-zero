@@ -7,9 +7,12 @@
   "scripts": {
     "watch": "tsx src/cli.ts watch",
     "review": "tsx src/cli.ts review",
+    "evaluate": "tsx src/cli.ts evaluate",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@earendil-works/pi-ai": "^0.80.6",
+    "@earendil-works/pi-coding-agent": "^0.80.6",
     "better-sqlite3": "^11.10.0",
     "yaml": "^2.7.0"
   },

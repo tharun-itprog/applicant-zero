@@ -1,22 +1,30 @@
 # Agent layer (Phase 2)
 
-This directory will hold the agentic half of the pipeline, built on the
-[pi](https://pi.dev) SDK running headless (no TUI). The deterministic watcher
-(`src/watcher`) finds new postings; this layer applies judgment to them.
+The agentic half of the pipeline, built on the [pi](https://pi.dev) SDK
+running headless (no TUI). The deterministic watcher (`src/watcher`) finds new
+postings; this layer applies judgment to them.
 
-## Design
+## Design: two stages, one tool each
 
-One headless agent run per prefiltered posting, with three registered tools:
+Each prefiltered posting gets up to two fresh in-memory pi sessions
+([runner.ts](runner.ts)). Built-in coding tools are disabled
+(`noTools: "builtin"`); each stage registers exactly one custom "submit" tool
+([tools.ts](tools.ts)) and must call it to deliver structured output — the
+tool's closure captures the payload for the orchestrator
+([evaluate.ts](evaluate.ts)).
 
-| Tool | Purpose |
-| --- | --- |
-| `score_match` | Score the posting 0–100 against `profile/base_resume.md` + preferences, with reasoning. Below threshold → stop. |
-| `tailor_resume` | Rewrite the base resume for this JD — reorder bullets, mirror keywords, never invent facts. Emits Markdown → PDF/DOCX. |
-| `draft_answers` | Draft answers to common application questions ("why us?", visa status, etc.) from profile context. |
+| Stage | Tool the agent must call | Purpose |
+| --- | --- | --- |
+| 1. Score | `submit_match_score` | 0–100 fit vs `profile/base_resume.md`, with reasoning, strengths, gaps. Below `agent.threshold` → stop; stage 2 never runs. |
+| 2. Tailor | `submit_application_package` | Tailored resume + drafted answers. Never invents facts not in the base resume. |
 
-Output: a `packages/<company>-<role>-<date>/` folder containing the tailored
-resume, drafted answers, match reasoning, and the direct apply link — ready
-for human review and one-click submission.
+Output: a `packages/<date>-<company>-<role>/` folder with `job.md`,
+`match.md`, `resume.md`, and `answers.md` — ready for human review and manual
+submission.
+
+Run it manually on a stored job: `npm run evaluate -- --latest` (needs
+`ANTHROPIC_API_KEY` in `.env`; model override via `AZERO_MODEL`, agent
+kill-switch via `AZERO_AGENT=off`).
 
 ## Deliberate non-goals
 

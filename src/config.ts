@@ -11,6 +11,7 @@ export interface CompanyConfig {
 export interface Preferences {
   titles: { include: string[]; exclude: string[] };
   locations: { include: string[]; exclude: string[] };
+  agent: { threshold: number };
 }
 
 export function loadCompanies(path = "companies.yaml"): CompanyConfig[] {
@@ -33,5 +34,6 @@ export function loadPreferences(): Preferences {
   return {
     titles: { include: raw.titles?.include ?? [], exclude: raw.titles?.exclude ?? [] },
     locations: { include: raw.locations?.include ?? [], exclude: raw.locations?.exclude ?? [] },
+    agent: { threshold: raw.agent?.threshold ?? 70 },
   };
 }
